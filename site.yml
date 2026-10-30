@@ -1,0 +1,61 @@
+---
+- name: Deploy DevOps Web Application
+  hosts: webservers
+  become: true
+
+  tasks:
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Ensure Nginx is running
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: /var/www/devops-app
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Deploy application webpage
+      ansible.builtin.template:
+        src: templates/index.html.j2
+        dest: /var/www/devops-app/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Deploy webpage to Nginx default root
+      ansible.builtin.copy:
+        src: /var/www/devops-app/index.html
+        dest: /var/www/html/index.html
+        remote_src: true
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      notify: Restart Nginx
+
+    - name: Verify Nginx service status
+      ansible.builtin.command:
+        cmd: systemctl is-active nginx
+      register: nginx_status
+      changed_when: false
+
+    - name: Display Nginx status
+      ansible.builtin.debug:
+        msg: "Nginx service status: {{ nginx_status.stdout }}"
+
+  handlers:
+
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted

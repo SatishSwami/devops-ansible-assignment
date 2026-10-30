@@ -1,0 +1,4 @@
+app_name: "DevOps Ansible Web Application"
+deployment_environment: "Development"
+student_name: "Satish Swami"
+server_port: 80
